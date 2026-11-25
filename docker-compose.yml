@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: incident-tracker-db
+    environment:
+      POSTGRES_DB: incidents
+      POSTGRES_USER: incidents
+      POSTGRES_PASSWORD: incidents
+    ports:
+      - "5433:5432"
+    volumes:
+      - incident_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incidents -d incidents"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    container_name: incident-tracker-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8082
+      DB_URL: jdbc:postgresql://db:5432/incidents
+      DB_USER: incidents
+      DB_PASSWORD: incidents
+      JWT_SECRET: Y2hhbmdlLXRoaXMtMjU2LWJpdC1zZWNyZXQtaW4tcHJvZHVjdGlvbi1lbnZpcm9ubWVudC0xMjM0NTY=
+    ports:
+      - "8082:8082"
+
+volumes:
+  incident_pg_data:
